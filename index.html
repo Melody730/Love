@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>指尖情书</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 86C22 66 10 50 10 34 10 20 21 10 34 10c7 0 13 3 16 8 3-5 9-8 16-8 13 0 24 10 24 24 0 16-12 32-40 52z' fill='%23e78aa8'/%3E%3C/svg%3E">
+<style>
+  @font-face { font-family: "Fredoka"; src: url("./assets/fonts/fredoka-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Fredoka"; src: url("./assets/fonts/fredoka-600.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+  @font-face { font-family: "DM Serif Display"; src: url("./assets/fonts/dm-serif-display-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Luckiest Guy"; src: url("./assets/fonts/luckiest-guy-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+
+  :root {
+    --cream: #fff6e6;
+    --cocoa: #43332a;
+    --blush: #e78aa8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #17100d; }
+  body {
+    font-family: "Fredoka", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  #cam {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; opacity: 0; pointer-events: none;
+  }
+  #scene {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---------- overlay chrome ---------- */
+  .ui-chrome { transition: opacity .35s ease; }
+  body.ui-hidden .ui-chrome { opacity: 0 !important; pointer-events: none !important; }
+
+  #nameBox {
+    position: fixed;
+    top: max(16px, env(safe-area-inset-top));
+    left: max(16px, env(safe-area-inset-left));
+    z-index: 20;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 7px;
+  }
+  .to-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    border: 0; cursor: pointer;
+    background: rgba(255, 249, 239, .93);
+    color: #3d2f27;
+    font-family: "Fredoka", "PingFang SC", sans-serif;
+    font-weight: 600; font-size: 12.5px; letter-spacing: .02em;
+    padding: 6px 12px 7px;
+    border-radius: 999px;
+    box-shadow: 0 3px 14px rgba(70, 40, 30, .16);
+    transition: transform .18s ease, background .18s ease;
+  }
+  .to-pill:hover { transform: translateY(-1px); background: #fffdf7; }
+  .to-pill .heart { color: #d76b8c; font-size: 12px; transform: translateY(-.5px); }
+
+  .name-line {
+    display: flex; align-items: baseline;
+    max-width: min(78vw, 900px);
+    margin-left: 2px;
+    opacity: 0; transform: translateY(-4px) scale(.98);
+    transition: opacity .25s ease, transform .25s ease;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .name-line.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  .name-line .to-word {
+    font-family: "Fredoka", "PingFang SC", sans-serif;
+    font-weight: 600;
+    font-size: clamp(34px, 6.4vw, 66px);
+    color: var(--cream);
+    text-shadow: 0 2px 16px rgba(70, 35, 25, .30), 0 1px 3px rgba(70, 35, 25, .22);
+    padding-right: .28em;
+    letter-spacing: .005em;
+  }
+  #nameInput {
+    font-family: "Fredoka", "PingFang SC", sans-serif;
+    font-weight: 600;
+    font-size: clamp(34px, 6.4vw, 66px);
+    line-height: 1.1;
+    color: var(--cream);
+    caret-color: #ffd9a8;
+    text-shadow: 0 2px 16px rgba(70, 35, 25, .30), 0 1px 3px rgba(70, 35, 25, .22);
+    outline: none;
+    min-width: 1.2em;
+    max-width: min(62vw, 760px);
+    overflow: hidden;
+    white-space: nowrap;
+    letter-spacing: .005em;
+    border-bottom: 2px solid transparent;
+  }
+  #nameInput:focus { border-bottom-color: rgba(255, 246, 230, .35); }
+
+  #hintPill {
+    position: fixed;
+    left: max(16px, env(safe-area-inset-left));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    z-index: 20;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 247, 235, .22);
+    border: 1px solid rgba(255, 250, 242, .28);
+    backdrop-filter: blur(8px) saturate(1.2);
+    -webkit-backdrop-filter: blur(8px) saturate(1.2);
+    color: rgba(255, 250, 242, .94);
+    font-size: 11px; letter-spacing: .03em;
+    box-shadow: 0 2px 12px rgba(50, 30, 20, .10);
+    transition: opacity .25s ease;
+  }
+  #hintPill.off { opacity: .45; }
+  #hintPill .key {
+    display: inline-grid; place-items: center;
+    min-width: 17px; height: 17px; padding: 0 4px;
+    border-radius: 5px;
+    background: rgba(255, 250, 242, .86);
+    color: #4a382c;
+    font-size: 10px; font-weight: 600;
+    box-shadow: 0 1px 2px rgba(40, 20, 10, .18);
+  }
+
+  #legend {
+    position: fixed;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    z-index: 20;
+    text-align: right;
+    font-family: "Fredoka", "PingFang SC", sans-serif;
+    font-size: 10.5px; line-height: 1.6;
+    letter-spacing: .015em;
+    color: rgba(255, 250, 243, .78);
+    text-shadow: 0 1px 5px rgba(45, 25, 18, .45);
+    pointer-events: none;
+  }
+  #legend .dim { opacity: .7; }
+
+  #recDot {
+    position: fixed;
+    top: max(18px, env(safe-area-inset-top));
+    right: max(18px, env(safe-area-inset-right));
+    z-index: 20;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(40, 18, 16, .42);
+    color: #ffe9ea;
+    font-size: 11px; letter-spacing: .08em;
+    backdrop-filter: blur(6px);
+  }
+  #recDot[hidden] { display: none; }
+  #recDot i {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ff5b6e;
+    box-shadow: 0 0 8px rgba(255, 80, 100, .9);
+    animation: blink 1.1s ease-in-out infinite;
+  }
+  @keyframes blink { 50% { opacity: .35; } }
+
+  #soundTip {
+    position: fixed;
+    left: 50%; bottom: max(56px, calc(env(safe-area-inset-bottom) + 44px));
+    transform: translateX(-50%);
+    z-index: 24;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(255, 249, 238, .88);
+    color: #62473a;
+    font-size: 12px; letter-spacing: .03em;
+    box-shadow: 0 5px 22px rgba(80, 45, 35, .18);
+    transition: opacity .4s ease, transform .4s ease;
+    animation: soundFloat 2.4s ease-in-out infinite;
+  }
+  #soundTip.gone { opacity: 0; transform: translateX(-50%) translateY(8px); pointer-events: none; }
+  @keyframes soundFloat { 50% { transform: translateX(-50%) translateY(-4px); } }
+
+  /* ---------- loader ---------- */
+  #loader {
+    position: fixed; inset: 0; z-index: 60;
+    display: grid; place-items: center;
+    background:
+      radial-gradient(1100px 760px at 50% 34%, #fff9f0 0%, #ffe9ee 52%, #f4d3de 100%);
+    transition: opacity .6s ease;
+    padding: 24px;
+  }
+  #loader.gone { opacity: 0; pointer-events: none; }
+  .loader-card {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    text-align: center;
+    transform: translateY(-4vh);
+  }
+  .loader-heart {
+    width: 74px; height: 74px;
+    filter: drop-shadow(0 8px 18px rgba(214, 112, 145, .28));
+    animation: beat 1.3s ease-in-out infinite;
+  }
+  @keyframes beat {
+    0%, 100% { transform: scale(1); }
+    12% { transform: scale(1.13); }
+    24% { transform: scale(1.02); }
+    36% { transform: scale(1.09); }
+    52% { transform: scale(1); }
+  }
+  .loader-title {
+    font-size: 26px; font-weight: 600; color: #5a3f34;
+    letter-spacing: .14em; margin-top: 2px;
+  }
+  .loader-sub {
+    font-size: 12.5px; color: #9a6f66; letter-spacing: .06em;
+    min-height: 1.4em;
+  }
+  .loader-note {
+    margin-top: 10px; font-size: 11.5px; line-height: 1.7;
+    color: #a37c72; max-width: 360px;
+  }
+  .loader-note[hidden] { display: none; }
+  .retry-btn {
+    margin-top: 6px;
+    border: 0; cursor: pointer;
+    padding: 9px 22px; border-radius: 999px;
+    background: #ef9db6; color: #fffdf8;
+    font-family: inherit; font-size: 13px; letter-spacing: .08em;
+    box-shadow: 0 6px 18px rgba(214, 112, 145, .35);
+  }
+  .retry-btn:hover { background: #e98aa8; }
+  .retry-btn[hidden] { display: none; }
+
+  @media (max-width: 720px) {
+    #legend { font-size: 9px; max-width: 68vw; }
+    #legend .wide { display: none; }
+    #hintPill { font-size: 10px; }
+    #soundTip { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<video id="cam" playsinline muted autoplay></video>
+<canvas id="scene"></canvas>
+
+<div id="nameBox" class="ui-chrome">
+  <button id="toPill" class="to-pill" title="写下收信人的名字">to <span class="heart">♡</span></button>
+  <div id="nameLine" class="name-line">
+    <span class="to-word">to</span><span id="nameInput" contenteditable="true" spellcheck="false" role="textbox" aria-label="收信人的名字"></span>
+  </div>
+</div>
+
+<div id="hintPill" class="ui-chrome"><span class="key">E</span> words · voice</div>
+
+<div id="legend" class="ui-chrome">
+  <div>thumb taps a finger, it speaks · right ring ♥ · right pinky ✿ · left pinky 💋</div>
+  <div>E words &amp; voice · K hand lines · M mirror</div>
+  <div>R record · S snapshot · H hide</div>
+</div>
+
+<div id="recDot" hidden><i></i><span id="recTime">REC 00:00</span></div>
+
+<div id="soundTip" class="ui-chrome">轻点一下页面，让情书开口说话 ♪</div>
+
+<div id="loader">
+  <div class="loader-card">
+    <svg class="loader-heart" viewBox="0 0 100 100" aria-hidden="true">
+      <path d="M50 87C21 66 9 50 9 33.5 9 19 20.5 9 33.5 9c6.8 0 12.8 2.9 16.5 8 3.7-5.1 9.7-8 16.5-8C79.5 9 91 19 91 33.5 91 50 79 66 50 87z" fill="#ef9db6"/>
+      <ellipse cx="32" cy="30" rx="7.5" ry="5" fill="#ffd7e2" opacity=".75" transform="rotate(-28 32 30)"/>
+    </svg>
+    <div class="loader-title">指尖情书</div>
+    <div class="loader-sub" id="loaderStatus">正在准备手部魔法…</div>
+    <div class="loader-note" id="loaderNote" hidden>请确认浏览器已允许使用摄像头。<br>建议用 Chrome / Edge 打开，并通过本地服务器访问。</div>
+    <button class="retry-btn" id="retryBtn" hidden>再试一次</button>
+  </div>
+</div>
+
+<script type="module">
+import { FilesetResolver, HandLandmarker } from "./assets/vision_bundle.js";
+
+/* ------------------------------------------------------------------ */
+/*  basics                                                             */
+/* ------------------------------------------------------------------ */
+const $ = (s) => document.querySelector(s);
+const canvas = $("#scene");
+const ctx = canvas.getContext("2d");
+const video = $("#cam");
+const nameInput = $("#nameInput");
+const nameLine = $("#nameLine");
+const toPill = $("#toPill");
+const hintPill = $("#hintPill");
+const loader = $("#loader");
+const loaderStatus = $("#loaderStatus");
+const loaderNote = $("#loaderNote");
+const retryBtn = $("#retryBtn");
+const soundTip = $("#soundTip");
+const recDot = $("#recDot");
+const recTime = $("#recTime");
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const rand = (a, b) => a + Math.random() * (b - a);
+const TAU = Math.PI * 2;
+
+const state = {
+  mirror: true,
+  lines: true,
+  words: true,
+  recording: false,
+  audioUnlocked: false,
+  dpr: Math.min(2, window.devicePixelRatio || 1),
+  cw: 0, ch: 0,
+  map: null,
+  hands: [],
+  wordStates: new Map(),
+  ghosts: [],
+  particles: [],
+  ripples: [],
+  flowers: [],
+  kiss: null,
+  lastTouch: new Map(),
+  lastTapTime: new Map(),
+  ambientTimer: 0,
+  time: 0,
+  fontReady: false,
+  landmarker: null,
+  rec: null,
+  recChunks: [],
+  recStart: 0,
+  recStream: null,
+  micStream: null,
+  glow: 0,
+};
+
+/* ------------------------------------------------------------------ */
+/*  canvas sizing                                                      */
+/* ------------------------------------------------------------------ */
+function resize() {
+  state.cw = window.innerWidth;
+  state.ch = window.innerHeight;
+  canvas.width = Math.round(state.cw * state.dpr);
+  canvas.height = Math.round(state.ch * state.dpr);
+  canvas.style.width = state.cw + "px";
+  canvas.style.height = state.ch + "px";
+}
+window.addEventListener("resize", resize);
+resize();
+
+function coverMap() {
+  const vw = video.videoWidth || 1280;
+  const vh = video.videoHeight || 720;
+  const cw = state.cw, ch = state.ch;
+  const s = Math.max(cw / vw, ch / vh);
+  const dw = vw * s, dh = vh * s;
+  return { vw, vh, cw, ch, dw, dh, dx: (cw - dw) / 2, dy: (ch - dh) / 2 };
+}
+
+/* ------------------------------------------------------------------ */
+/*  fonts                                                              */
+/* ------------------------------------------------------------------ */
+async function loadFonts() {
+  try {
+    await Promise.all([
+      document.fonts.load('600 40px "Fredoka"'),
+      document.fonts.load('500 40px "Fredoka"'),
+      document.fonts.load('40px "DM Serif Display"'),
+      document.fonts.load('40px "Luckiest Guy"'),
+    ]);
+    await document.fonts.ready;
+  } catch (e) { /* system fallback is okay */ }
+  state.fontReady = true;
+}
+
+/* ------------------------------------------------------------------ */
+/*  audio helpers                                                      */
+/* ------------------------------------------------------------------ */
+let audioCtx = null;
+function ensureAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  } catch (e) {}
+}
+function chime(freq = 720, dur = 0.28, type = "sine", gain = 0.05) {
+  if (!state.audioUnlocked || !audioCtx) return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  o.frequency.exponentialRampToValueAtTime(freq * 1.35, t + dur * 0.7);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+function speak(text) {
+  if (!state.words || !("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 0.92;
+    u.pitch = 1.08;
+    u.volume = 1;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+/* ------------------------------------------------------------------ */
+/*  words / styles                                                     */
+/* ------------------------------------------------------------------ */
+const WORDS = {
+  A: {
+    index:  { text: "so",   font: "serif",   fill: "#fff5e2", stroke: "rgba(63,46,36,.92)", outer: "rgba(255,252,246,.95)", size: 0.95, dx: 0.12, dy: 0.85, word: "so" },
+    middle: { text: "much", font: "bubble",  fill: "#8ce39a", stroke: "rgba(38,92,54,.35)",  outer: "rgba(255,255,255,.96)", size: 0.78, dx: -0.05, dy: 0.82, word: "much" },
+  },
+  B: {
+    index:  { text: "love", font: "serifB",  fill: "#c00f3b", stroke: "rgba(255,213,224,.95)", outer: "rgba(255,120,150,.55)", size: 0.95, dx: 0.0, dy: 0.85, word: "love" },
+    middle: { text: "you",  font: "chunky",  fill: "gradBlue", stroke: "rgba(30,55,82,.95)",   outer: "rgba(255,251,240,.96)", size: 1.55, dx: 0.05, dy: 0.62, word: "you" },
+  },
+};
+const TIP_INDEX = 8, TIP_MIDDLE = 12, TIP_RING = 16, TIP_PINKY = 20;
+
+function wordFont(style, px) {
+  switch (style.font) {
+    case "serif":  return `${px}px "DM Serif Display", Georgia, serif`;
+    case "serifB": return `600 ${px}px "DM Serif Display", Georgia, serif`;
+    case "bubble": return `600 ${px}px "Fredoka", "PingFang SC", sans-serif`;
+    case "chunky": return `${px}px "Luckiest Guy", "Fredoka", sans-serif`;
+    default:       return `${px}px "Fredoka", sans-serif`;
+  }
+}
+function wordGradient(size, fill) {
+  if (fill !== "gradBlue") return fill;
+  const g = ctx.createLinearGradient(0, -size * 0.72, 0, size * 0.18);
+  g.addColorStop(0, "#e6f9ff");
+  g.addColorStop(0.55, "#bfeaf8");
+  g.addColorStop(1, "#93d5ee");
+  return g;
+}
+function drawWord(style, x, y, size, rot, alpha) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.globalAlpha = alpha;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.font = wordFont(style, size);
+
+  // soft drop shadow
+  ctx.shadowColor = "rgba(50,28,22,.28)";
+  ctx.shadowBlur = size * 0.22;
+  ctx.shadowOffsetY = size * 0.07;
+
+  // outer sticker outline
+  ctx.strokeStyle = style.outer;
+  ctx.lineWidth = Math.max(2, size * 0.20);
+  ctx.strokeText(style.text, 0, 0);
+
+  // dark/colored inner stroke
+  ctx.strokeStyle = style.stroke;
+  ctx.lineWidth = Math.max(1, size * 0.065);
+  ctx.strokeText(style.text, 0, 0);
+
+  // fill
+  ctx.shadowColor = "transparent";
+  ctx.fillStyle = wordGradient(size, style.fill);
+  ctx.fillText(style.text, 0, 0);
+  ctx.restore();
+}
+
+/* ------------------------------------------------------------------ */
+/*  hand landmarker                                                    */
+/* ------------------------------------------------------------------ */
+async function createLandmarker(delegate) {
+  const vision = await FilesetResolver.forVisionTasks("./assets/wasm");
+  return HandLandmarker.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath: "./assets/hand_landmarker.task",
+      delegate,
+    },
+    runningMode: "VIDEO",
+    numHands: 2,
+    minHandDetectionConfidence: 0.5,
+    minHandPresenceConfidence: 0.5,
+    minTrackingConfidence: 0.5,
+  });
+}
+
+async function initLandmarker() {
+  try {
+    state.landmarker = await createLandmarker("GPU");
+  } catch (e) {
+    state.landmarker = await createLandmarker("CPU");
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  camera                                                             */
+/* ------------------------------------------------------------------ */
+async function startCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error("这台浏览器不支持摄像头访问。");
+  }
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+    audio: false,
+  });
+  video.srcObject = stream;
+  await video.play().catch(() => {});
+  await new Promise((resolve) => {
+    if (video.readyState >= 2) return resolve();
+    video.addEventListener("loadeddata", resolve, { once: true });
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  hand geometry helpers                                              */
+/* ------------------------------------------------------------------ */
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+function buildHand(lm, map) {
+  const pts = lm.map((p) => ({
+    x: map.dx + (state.mirror ? 1 - p.x : p.x) * map.dw,
+    y: map.dy + p.y * map.dh,
+    z: p.z,
+  }));
+  const palm = [0, 5, 9, 13, 17].reduce((acc, i) => ({ x: acc.x + pts[i].x / 5, y: acc.y + pts[i].y / 5 }), { x: 0, y: 0 });
+  const scale = dist(pts[0], pts[9]) || 60;
+  return { pts, palm, scale, side: palm.x < state.cw * 0.5 ? "A" : "B", z: pts[9].z || 0 };
+}
+
+function updateHands(result, map) {
+  const hands = (result.landmarks || []).map((lm) => buildHand(lm, map));
+  // stable left/right assignment when both hands share a side
+  hands.sort((a, b) => a.palm.x - b.palm.x);
+  if (hands.length === 2) {
+    hands[0].side = "A";
+    hands[1].side = "B";
+  } else if (hands.length === 1) {
+    hands[0].side = hands[0].palm.x < state.cw * 0.5 ? "A" : "B";
+  }
+  state.hands = hands;
+  detectTouches(hands);
+}
+
+/* ------------------------------------------------------------------ */
+/*  touches: thumb taps a finger, it speaks                            */
+/* ------------------------------------------------------------------ */
+function detectTouches(hands) {
+  for (const hand of hands) {
+    const thumb = hand.pts[4];
+    for (const tipIdx of [TIP_INDEX, TIP_MIDDLE, TIP_RING, TIP_PINKY]) {
+      const key = hand.side + ":" + tipIdx;
+      const d = dist(thumb, hand.pts[tipIdx]) / hand.scale;
+      const touching = d < 0.62;
+      const was = state.lastTouch.get(key) || false;
+      if (touching && !was) {
+        const now = performance.now();
+        const last = state.lastTapTime.get(key) || 0;
+        if (now - last > 650) {
+          state.lastTapTime.set(key, now);
+          onFingerTap(hand, tipIdx);
+        }
+      }
+      state.lastTouch.set(key, touching);
+    }
+  }
+}
+
+function onFingerTap(hand, tipIdx) {
+  const tip = hand.pts[tipIdx];
+  const styleMap = WORDS[hand.side];
+  const which = tipIdx === TIP_INDEX ? "index" : tipIdx === TIP_MIDDLE ? "middle" : null;
+  const style = which ? styleMap[which] : null;
+  const color = style ? (style.fill === "gradBlue" ? "#bfeaf8" : style.fill) : "#ffd7e2";
+
+  state.glow = 1;
+  burstHearts(tip.x, tip.y, 12 + Math.floor(Math.random() * 6), color);
+  state.ripples.push({ x: tip.x, y: tip.y, r0: hand.scale * 0.08, r1: hand.scale * 0.9, life: 0.6, max: 0.6, color });
+  chime(tipIdx === TIP_PINKY ? 560 : 760, 0.26, "sine", 0.045);
+
+  if (which) {
+    speak(style.word);
+    // a big echo of the word
+    spawnGhost(hand.side, which, tip, hand, true);
+    burstSparkles(tip.x, tip.y, 7, color);
+  } else if (tipIdx === TIP_RING) {
+    burstHearts(tip.x, tip.y, 8, "#ffb7cb");
+  } else if (tipIdx === TIP_PINKY) {
+    if (hand.side === "B") triggerKiss();
+    else burstFlowers();
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  effects: hearts, sparkles, flowers, kiss                           */
+/* ------------------------------------------------------------------ */
+const HEART_COLORS = ["#ff9fbe", "#ffc0d3", "#ffe3ea", "#fff3e6", "#ff7fa6"];
+function spawnHeart(x, y, color, size, vx, vy, life = 2.4) {
+  state.particles.push({
+    kind: "heart", x, y, vx, vy,
+    color: color || HEART_COLORS[(Math.random() * HEART_COLORS.length) | 0],
+    size: size || rand(7, 15), rot: rand(-0.5, 0.5), vr: rand(-1.4, 1.4),
+    life, max: life, sway: rand(0.6, 1.6), phase: rand(0, TAU),
+  });
+}
+function burstHearts(x, y, n, color) {
+  for (let i = 0; i < n; i++) {
+    const a = rand(0, TAU);
+    const sp = rand(30, 150);
+    spawnHeart(x + Math.cos(a) * 8, y + Math.sin(a) * 8, color, rand(7, 16),
+      Math.cos(a) * sp, Math.sin(a) * sp - 30, rand(1.4, 2.8));
+  }
+}
+function burstSparkles(x, y, n, color) {
+  for (let i = 0; i < n; i++) {
+    const a = rand(0, TAU);
+    const sp = rand(40, 170);
+    state.particles.push({
+      kind: "spark", x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+      color: color || "#fff4d6", size: rand(3, 8), rot: rand(0, TAU), vr: rand(-3, 3),
+      life: rand(0.5, 0.9), max: 0.9,
+    });
+  }
+}
+function burstFlowers() {
+  const emojis = ["🌸", "🌷", "🌺", "💮", "✿"];
+  for (let i = 0; i < 22; i++) {
+    state.flowers.push({
+      emoji: emojis[(Math.random() * emojis.length) | 0],
+      x: rand(state.cw * 0.05, state.cw * 0.95),
+      y: state.ch + rand(10, 80),
+      vy: rand(-150, -80),
+      size: rand(16, 34),
+      rot: rand(-0.4, 0.4),
+      sway: rand(10, 34),
+      phase: rand(0, TAU),
+      life: rand(2.6, 4.2), max: 4.2,
+    });
+  }
+  chime(880, 0.5, "triangle", 0.04);
+}
+function triggerKiss() {
+  state.kiss = { t: 0, dur: 2.9, x: state.cw * 0.5, y: state.ch * 0.36, rot: -0.09 };
+  for (let i = 0; i < 34; i++) {
+    const a = rand(0, TAU);
+    const sp = rand(60, 320);
+    state.particles.push({
+      kind: "petal",
+      x: state.cw * 0.5, y: state.ch * 0.36,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40,
+      color: Math.random() < 0.5 ? "#d81b45" : "#ff9fb4",
+      size: rand(4, 10), rot: rand(0, TAU), vr: rand(-4, 4),
+      life: rand(0.8, 1.8), max: 1.8,
+    });
+  }
+  chime(420, 0.5, "triangle", 0.05);
+}
+
+/* ------------------------------------------------------------------ */
+/*  word ghosts                                                        */
+/* ------------------------------------------------------------------ */
+function spawnGhost(side, which, tip, hand, strong = false) {
+  const style = WORDS[side][which];
+  const key = side + "-" + which;
+  const ws = state.wordStates.get(key);
+  const baseSize = ws ? ws.size : clamp(hand.scale * 0.23, 15, 52) * style.size;
+  state.ghosts.push({
+    side, which, style,
+    x: ws ? ws.x : tip.x,
+    y: ws ? ws.y : tip.y - baseSize * 0.9,
+    size: baseSize,
+    rot: ws ? ws.rot : 0,
+    born: state.time,
+    dur: strong ? 1.35 : rand(0.9, 1.25),
+    grow: strong ? 1.9 : 1.5,
+    rise: strong ? 52 : 30,
+    alpha: strong ? 0.95 : 0.75,
+  });
+  if (state.ghosts.length > 24) state.ghosts.shift();
+}
+
+/* ------------------------------------------------------------------ */
+/*  emoji decorations                                                  */
+/* ------------------------------------------------------------------ */
+function emojiFor(side, tipIdx) {
+  if (side === "A" && tipIdx === TIP_RING) return "💗";
+  if (side === "A" && tipIdx === TIP_PINKY) return "🌸";
+  if (side === "B" && tipIdx === TIP_PINKY) return "💋";
+  return null;
+}
+function drawEmojis() {
+  for (const hand of state.hands) {
+    for (const tipIdx of [TIP_RING, TIP_PINKY]) {
+      const emoji = emojiFor(hand.side, tipIdx);
+      if (!emoji) continue;
+      const tip = hand.pts[tipIdx];
+      const size = clamp(hand.scale * 0.21, 10, 30);
+      const bob = Math.sin(state.time * 1.9 + tipIdx) * 4;
+      ctx.save();
+      ctx.globalAlpha = 0.95;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `${size}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+      ctx.shadowColor = "rgba(60,30,25,.22)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 2;
+      ctx.fillText(emoji, tip.x, tip.y - size * 0.95 + bob);
+      ctx.restore();
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  drawing                                                            */
+/* ------------------------------------------------------------------ */
+const HAND_CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],
+  [0,17],
+];
+
+function drawVideo(map) {
+  ctx.save();
+  if (state.mirror) {
+    ctx.translate(state.cw, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(video, map.dx, map.dy, map.dw, map.dh);
+  ctx.restore();
+}
+
+function drawHandLines() {
+  if (!state.lines) return;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  for (const hand of state.hands) {
+    const pts = hand.pts;
+    ctx.save();
+
+    // glow pass
+    ctx.strokeStyle = "rgba(255,248,238,.12)";
+    ctx.lineWidth = 4;
+    for (const [a, b] of HAND_CONNECTIONS) {
+      ctx.beginPath(); ctx.moveTo(pts[a].x, pts[a].y); ctx.lineTo(pts[b].x, pts[b].y); ctx.stroke();
+    }
+    // core pass
+    ctx.strokeStyle = "rgba(255,248,240,.92)";
+    ctx.lineWidth = 1.1;
+    ctx.shadowColor = "rgba(255,245,235,.45)";
+    ctx.shadowBlur = 3;
+    for (const [a, b] of HAND_CONNECTIONS) {
+      ctx.beginPath(); ctx.moveTo(pts[a].x, pts[a].y); ctx.lineTo(pts[b].x, pts[b].y); ctx.stroke();
+    }
+
+    // joints
+    ctx.shadowBlur = 3;
+    for (let i = 0; i < pts.length; i++) {
+      const tip = [4, 8, 12, 16, 20].includes(i);
+      ctx.beginPath();
+      ctx.arc(pts[i].x, pts[i].y, tip ? 2.1 : 1.4, 0, TAU);
+      ctx.fillStyle = "rgba(255,250,243,.96)";
+      ctx.fill();
+    }
+
+    // colored fingertip gems
+    const wordStyles = WORDS[hand.side];
+    const tips = [
+      [TIP_INDEX, wordStyles.index.fill],
+      [TIP_MIDDLE, wordStyles.middle.fill],
+      [TIP_RING, hand.side === "A" ? "#ff9fc4" : "#ffe9d9"],
+      [TIP_PINKY, hand.side === "A" ? "#ffb7d2" : "#e2445c"],
+    ];
+    ctx.shadowBlur = 6;
+    for (const [idx, color] of tips) {
+      ctx.beginPath();
+      ctx.arc(pts[idx].x, pts[idx].y, 3.0, 0, TAU);
+      ctx.fillStyle = color === "gradBlue" ? "#bfeaf8" : color;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(pts[idx].x, pts[idx].y, 1.0, 0, TAU);
+      ctx.fillStyle = "rgba(255,252,247,.95)";
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function wordTargets(hand) {
+  const pts = hand.pts;
+  const styles = WORDS[hand.side];
+  const sizeBase = clamp(hand.scale * 0.23, 15, 52) * (1 + clamp(-(hand.z || 0) * 1.2, -0.12, 0.28));
+  const tilt = clamp((pts[9].x - pts[0].x) / (hand.scale * 2.2), -0.16, 0.16);
+  const wobble = Math.sin(state.time * 1.3 + hand.palm.x * 0.02) * 0.012;
+  return [
+    { which: "index", tipIdx: TIP_INDEX, style: styles.index, size: sizeBase * styles.index.size, rot: tilt + wobble },
+    { which: "middle", tipIdx: TIP_MIDDLE, style: styles.middle, size: sizeBase * styles.middle.size, rot: tilt * 0.7 + wobble },
+  ];
+}
+
+function drawWords() {
+  if (!state.words) { state.wordStates.clear(); state.ghosts.length = 0; return; }
+  const seen = new Set();
+  for (const hand of state.hands) {
+    for (const target of wordTargets(hand)) {
+      const key = hand.side + "-" + target.which;
+      seen.add(key);
+      const tip = hand.pts[target.tipIdx];
+      const size = target.size;
+      const style = target.style;
+      const tx = tip.x + size * (style.dx || 0);
+      const ty = tip.y - size * (style.dy || 0.85) - 7;
+      let ws = state.wordStates.get(key);
+      if (!ws) {
+        ws = { x: tx, y: ty, size, rot: target.rot, key, lastGhost: state.time + rand(0.2, 1.2) };
+        state.wordStates.set(key, ws);
+      }
+      ws.x = lerp(ws.x, tx, 0.30);
+      ws.y = lerp(ws.y, ty, 0.30);
+      ws.size = lerp(ws.size, size, 0.18);
+      ws.rot = lerp(ws.rot, target.rot, 0.20);
+      ws.hand = hand;
+
+      drawWord(target.style, ws.x, ws.y, ws.size, ws.rot, 1);
+
+      // periodic rising echo, like the reference
+      if (state.time - ws.lastGhost > rand(1.4, 2.3)) {
+        ws.lastGhost = state.time;
+        spawnGhost(hand.side, target.which, tip, hand, false);
+      }
+    }
+  }
+  for (const key of [...state.wordStates.keys()]) {
+    if (!seen.has(key)) state.wordStates.delete(key);
+  }
+}
+
+function drawGhosts() {
+  for (let i = state.ghosts.length - 1; i >= 0; i--) {
+    const g = state.ghosts[i];
+    const p = (state.time - g.born) / g.dur;
+    if (p >= 1) { state.ghosts.splice(i, 1); continue; }
+    const ease = 1 - Math.pow(1 - p, 2);
+    drawWord(
+      g.style,
+      g.x,
+      g.y - g.rise * ease,
+      g.size * (1 + (g.grow - 1) * ease),
+      g.rot,
+      g.alpha * (1 - ease)
+    );
+  }
+}
+
+function drawRipples(dt) {
+  for (let i = state.ripples.length - 1; i >= 0; i--) {
+    const r = state.ripples[i];
+    r.life -= dt;
+    if (r.life <= 0) { state.ripples.splice(i, 1); continue; }
+    const p = 1 - r.life / r.max;
+    ctx.save();
+    ctx.globalAlpha = (1 - p) * 0.7;
+    ctx.strokeStyle = r.color;
+    ctx.lineWidth = 2.2 * (1 - p) + 0.5;
+    ctx.shadowColor = r.color;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(r.x, r.y, lerp(r.r0, r.r1, p), 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawParticles(dt) {
+  for (let i = state.particles.length - 1; i >= 0; i--) {
+    const p = state.particles[i];
+    p.life -= dt;
+    if (p.life <= 0) { state.particles.splice(i, 1); continue; }
+    const a = clamp(p.life / p.max, 0, 1);
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += (p.kind === "heart" ? -8 : 26) * dt;
+    p.vx *= 0.995;
+    p.rot += p.vr * dt;
+    ctx.save();
+    ctx.globalAlpha = a * (p.kind === "heart" ? 0.9 : 0.85);
+    if (p.kind === "heart") {
+      const sway = Math.sin(state.time * p.sway * 2 + p.phase) * 8;
+      drawHeartShape(p.x + sway, p.y, p.size, p.rot, p.color);
+    } else if (p.kind === "spark") {
+      drawSpark(p.x, p.y, p.size, p.rot, p.color);
+    } else if (p.kind === "petal") {
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.size, p.size * 0.45, 0, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  if (state.particles.length > 220) state.particles.splice(0, state.particles.length - 220);
+}
+
+function drawHeartShape(x, y, s, rot, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.scale(s / 16, s / 16);
+  ctx.beginPath();
+  ctx.moveTo(0, 8);
+  ctx.bezierCurveTo(-9, 0, -9.5, -6.5, -5.2, -7.8);
+  ctx.bezierCurveTo(-2.4, -8.7, -0.6, -6.4, 0, -4.9);
+  ctx.bezierCurveTo(0.6, -6.4, 2.4, -8.7, 5.2, -7.8);
+  ctx.bezierCurveTo(9.5, -6.5, 9, 0, 0, 8);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+}
+function drawSpark(x, y, s, rot, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.quadraticCurveTo(s * 0.16, -s * 0.16, s, 0);
+  ctx.quadraticCurveTo(s * 0.16, s * 0.16, 0, s);
+  ctx.quadraticCurveTo(-s * 0.16, s * 0.16, -s, 0);
+  ctx.quadraticCurveTo(-s * 0.16, -s * 0.16, 0, -s);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFlowers(dt) {
+  for (let i = state.flowers.length - 1; i >= 0; i--) {
+    const f = state.flowers[i];
+    f.life -= dt;
+    if (f.life <= 0) { state.flowers.splice(i, 1); continue; }
+    f.y += f.vy * dt;
+    const p = f.life / f.max;
+    const sway = Math.sin(state.time * 1.4 + f.phase) * f.sway;
+    ctx.save();
+    ctx.globalAlpha = clamp(p * 1.6, 0, 0.95);
+    ctx.translate(f.x + sway, f.y);
+    ctx.rotate(f.rot + Math.sin(state.time + f.phase) * 0.08);
+    ctx.font = `${f.size}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(150,60,90,.25)";
+    ctx.shadowBlur = 8;
+    ctx.fillText(f.emoji, 0, 0);
+    ctx.restore();
+  }
+}
+
+function drawKiss(dt) {
+  if (!state.kiss) return;
+  const k = state.kiss;
+  k.t += dt;
+  const p = k.t / k.dur;
+  if (p >= 1) { state.kiss = null; return; }
+  let alpha;
+  if (p < 0.12) alpha = p / 0.12;
+  else if (p < 0.7) alpha = 1;
+  else alpha = (1 - p) / 0.3;
+  const scale = 0.92 + 0.14 * Math.min(1, p * 5) + 0.03 * Math.sin(state.time * 2);
+  const size = Math.min(state.cw, state.ch) * 0.43;
+  ctx.save();
+  ctx.globalAlpha = alpha * 0.94;
+  ctx.translate(k.x, k.y);
+  ctx.rotate(k.rot + Math.sin(state.time * 1.2) * 0.01);
+  ctx.scale(scale, scale);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `${size}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+  ctx.shadowColor = "rgba(190,20,60,.45)";
+  ctx.shadowBlur = size * 0.12;
+  ctx.fillText("💋", 0, 0);
+  ctx.restore();
+}
+
+function spawnAmbient(dt) {
+  state.ambientTimer -= dt;
+  if (state.ambientTimer > 0) return;
+  state.ambientTimer = rand(0.45, 1.0);
+  if (state.particles.length < 160) {
+    spawnHeart(rand(state.cw * 0.08, state.cw * 0.92), state.ch * rand(0.55, 0.95),
+      null, rand(5, 12), rand(-10, 10), rand(-55, -25), rand(2.4, 4.0));
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  main loop                                                          */
+/* ------------------------------------------------------------------ */
+let lastFrame = performance.now();
+let lastDetect = 0;
+let rafId = 0;
+
+function frame(now) {
+  rafId = requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - lastFrame) / 1000);
+  lastFrame = now;
+  state.time += dt;
+
+  if (!video.videoWidth) return;
+  const map = coverMap();
+  ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+  ctx.clearRect(0, 0, state.cw, state.ch);
+
+  drawVideo(map);
+
+  if (state.landmarker && video.readyState >= 2 && now - lastDetect > 16) {
+    lastDetect = now;
+    try {
+      const result = state.landmarker.detectForVideo(video, now);
+      updateHands(result, map);
+    } catch (e) {
+      // keep the last hands this frame
+    }
+  }
+
+  spawnAmbient(dt);
+  drawParticles(dt);
+  drawFlowers(dt);
+  drawHandLines();
+  drawEmojis();
+  drawGhosts();
+  drawWords();
+  drawRipples(dt);
+  drawKiss(dt);
+
+  // small screen flash on tap
+  if (state.glow > 0) {
+    state.glow = Math.max(0, state.glow - dt * 3.2);
+    ctx.save();
+    ctx.globalAlpha = state.glow * 0.10;
+    ctx.fillStyle = "#ffe6ee";
+    ctx.fillRect(0, 0, state.cw, state.ch);
+    ctx.restore();
+  }
+
+  if (state.recording) {
+    const t = (performance.now() - state.recStart) / 1000;
+    const mm = String(Math.floor(t / 60)).padStart(2, "0");
+    const ss = String(Math.floor(t % 60)).padStart(2, "0");
+    recTime.textContent = `REC ${mm}:${ss}`;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  recording / snapshot                                              */
+/* ------------------------------------------------------------------ */
+async function toggleRecord() {
+  if (state.recording) {
+    try { state.rec.stop(); } catch (e) {}
+    return;
+  }
+  try {
+    const stream = canvas.captureStream(30);
+    try {
+      state.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      state.micStream.getAudioTracks().forEach((t) => stream.addTrack(t));
+    } catch (e) { /* silent video */ }
+    const mime = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"]
+      .find((m) => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || "";
+    state.rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 9_000_000 } : undefined);
+    state.recChunks = [];
+    state.rec.ondataavailable = (e) => { if (e.data.size) state.recChunks.push(e.data); };
+    state.rec.onstop = () => {
+      const blob = new Blob(state.recChunks, { type: "video/webm" });
+      const a = document.createElement("a");
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
+      a.download = `指尖情书_${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.webm`;
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      state.rec = null;
+      state.recording = false;
+      recDot.hidden = true;
+      if (state.micStream) {
+        state.micStream.getTracks().forEach((t) => t.stop());
+        state.micStream = null;
+      }
+    };
+    state.rec.start(250);
+    state.recording = true;
+    state.recStart = performance.now();
+    recDot.hidden = false;
+    recTime.textContent = "REC 00:00";
+    chime(620, 0.18, "sine", 0.03);
+  } catch (e) {
+    alert("这台设备暂时无法录制，可以直接用系统录屏。");
+  }
+}
+
+function snapshot() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const a = document.createElement("a");
+    a.download = `指尖情书_${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.png`;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, "image/png");
+  state.glow = 0.6;
+}
+
+/* ------------------------------------------------------------------ */
+/*  name field                                                         */
+/* ------------------------------------------------------------------ */
+function readName() { return nameInput.textContent.replace(/\s+/g, " ").trim(); }
+function updateNameLine() {
+  const hasText = readName().length > 0;
+  const focused = document.activeElement === nameInput;
+  nameLine.classList.toggle("show", hasText || focused);
+  try { localStorage.setItem("fingertip-love-name", nameInput.textContent); } catch (e) {}
+}
+function focusName() {
+  nameLine.classList.add("show");
+  nameInput.focus();
+  const range = document.createRange();
+  range.selectNodeContents(nameInput);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+toPill.addEventListener("click", () => { ensureAudio(); focusName(); });
+nameInput.addEventListener("input", () => {
+  if (nameInput.textContent.length > 24) {
+    nameInput.textContent = nameInput.textContent.slice(0, 24);
+    focusName();
+  }
+  updateNameLine();
+});
+nameInput.addEventListener("focus", updateNameLine);
+nameInput.addEventListener("blur", updateNameLine);
+nameInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); nameInput.blur(); }
+});
+try {
+  const fromLink = (new URLSearchParams(location.search).get("to") || "").trim().slice(0, 24);
+  const saved = localStorage.getItem("fingertip-love-name");
+  if (fromLink) nameInput.textContent = fromLink;
+  else if (saved) nameInput.textContent = saved;
+  if (fromLink || saved) updateNameLine();
+} catch (e) {}
+
+/* paste plain text into the name field */
+nameInput.addEventListener("paste", (e) => {
+  e.preventDefault();
+  const text = ((e.clipboardData || window.clipboardData).getData("text") || "")
+    .replace(/\s+/g, " ")
+    .slice(0, 24);
+  document.execCommand("insertText", false, text);
+});
+
+/* ------------------------------------------------------------------ */
+/*  keyboard                                                           */
+/* ------------------------------------------------------------------ */
+window.addEventListener("keydown", (e) => {
+  if (e.target && (e.target.isContentEditable || e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+  const k = e.key.toLowerCase();
+  if (k === "e") {
+    state.words = !state.words;
+    hintPill.classList.toggle("off", !state.words);
+    if (!state.words && "speechSynthesis" in window) window.speechSynthesis.cancel();
+  } else if (k === "k") {
+    state.lines = !state.lines;
+  } else if (k === "m") {
+    state.mirror = !state.mirror;
+  } else if (k === "r") {
+    toggleRecord();
+  } else if (k === "s") {
+    snapshot();
+  } else if (k === "h") {
+    document.body.classList.toggle("ui-hidden");
+  } else if (k === "escape") {
+    nameInput.blur();
+  }
+});
+
+hintPill.addEventListener("click", (e) => {
+  e.preventDefault();
+  state.words = !state.words;
+  hintPill.classList.toggle("off", !state.words);
+});
+
+/* ------------------------------------------------------------------ */
+/*  first-gesture audio unlock                                         */
+/* ------------------------------------------------------------------ */
+function unlockAudio() {
+  if (state.audioUnlocked) return;
+  state.audioUnlocked = true;
+  ensureAudio();
+  soundTip.classList.add("gone");
+  chime(880, 0.25, "sine", 0.035);
+}
+window.addEventListener("pointerdown", unlockAudio, { passive: true });
+window.addEventListener("keydown", unlockAudio);
+setTimeout(() => soundTip.classList.add("gone"), 12000);
+
+/* ------------------------------------------------------------------ */
+/*  loading                                                            */
+/* ------------------------------------------------------------------ */
+function setStatus(text) { loaderStatus.textContent = text; }
+function showError(message) {
+  loader.classList.remove("gone");
+  setStatus("情书还没拆开");
+  loaderNote.hidden = false;
+  loaderNote.innerHTML = message;
+  retryBtn.hidden = false;
+}
+retryBtn.addEventListener("click", async () => {
+  retryBtn.hidden = true;
+  loaderNote.hidden = true;
+  try {
+    if (!state.landmarker) {
+      setStatus("正在准备手部魔法…");
+      await initLandmarker();
+    }
+    setStatus("正在打开摄像头…");
+    await startCamera();
+    setStatus("把双手举到镜头前…");
+    setTimeout(() => loader.classList.add("gone"), 500);
+    if (!rafId) rafId = requestAnimationFrame(frame);
+  } catch (e) {
+    showError("还是没能打开。<br>请确认已允许摄像头权限，<br>并且页面是通过 http://localhost 或 https 打开的。");
+  }
+});
+
+async function boot() {
+  resize();
+  await loadFonts();
+  setStatus("正在准备手部魔法…");
+  try {
+    await initLandmarker();
+  } catch (e) {
+    showError("手部模型加载失败。<br>请确认 assets 文件夹完整，并通过本地服务器打开页面。");
+    return;
+  }
+  setStatus("正在打开摄像头…");
+  try {
+    await startCamera();
+  } catch (e) {
+    const msg = String(e && e.message || e);
+    showError("无法打开摄像头。<br>请允许浏览器使用摄像头后重试。<br><span style='opacity:.7'>" + msg.replace(/</g, "&lt;") + "</span>");
+    return;
+  }
+  setStatus("把双手举到镜头前…");
+  setTimeout(() => loader.classList.add("gone"), 550);
+  rafId = requestAnimationFrame(frame);
+}
+
+boot();
+</script>
+</body>
+</html>
